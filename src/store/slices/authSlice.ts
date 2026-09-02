@@ -1,6 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { AuthUser } from "@/types/api";
 import { authApi } from "@/store/api/endpoints/authApi";
+import { clearSession, setAccessToken } from "./authActions";
 
 /**
  * Session state.
@@ -9,6 +10,10 @@ import { authApi } from "@/store/api/endpoints/authApi";
  * `localStorage` is readable by any injected script, and the refresh token already
  * lives in an HttpOnly cookie that survives a reload (frontend-requirements §32).
  * `status` drives the boot splash while we work out whether that cookie is still good.
+ *
+ * Import `authApi` from its own module, never from `@/store/api/endpoints` — the
+ * barrel pulls in every endpoint file and widens the import cycle this slice already
+ * sits on the edge of.
  */
 export type AuthStatus = "idle" | "authenticating" | "authenticated" | "unauthenticated";
 
@@ -28,9 +33,6 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setAccessToken(state, action: PayloadAction<string | null>) {
-      state.accessToken = action.payload;
-    },
     setUser(state, action: PayloadAction<AuthUser | null>) {
       state.user = action.payload;
       state.status = action.payload ? "authenticated" : "unauthenticated";
@@ -41,12 +43,14 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.status = "unauthenticated";
     },
-    clearSession() {
-      return { ...initialState, status: "unauthenticated" as const };
-    },
   },
   extraReducers: (builder) => {
     builder
+      // Dispatched by `baseQuery`; defined in `authActions` to break the import cycle.
+      .addCase(setAccessToken, (state, action) => {
+        state.accessToken = action.payload;
+      })
+      .addCase(clearSession, () => ({ ...initialState, status: "unauthenticated" as const }))
       .addMatcher(authApi.endpoints.login.matchFulfilled, (state, { payload }) => {
         state.accessToken = payload.tokens.accessToken;
         state.status = "authenticated";
@@ -69,5 +73,7 @@ const authSlice = createSlice({
   },
 });
 
-export const { setAccessToken, setUser, setUnauthenticated, clearSession } = authSlice.actions;
+export const { setUser, setUnauthenticated } = authSlice.actions;
+// Re-exported so callers have a single place to import auth actions from.
+export { setAccessToken, clearSession };
 export default authSlice.reducer;

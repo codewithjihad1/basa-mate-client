@@ -34,3 +34,11 @@ export const apiSlice = createApi({
   refetchOnMountOrArgChange: 30,
   endpoints: () => ({}),
 });
+
+/**
+ * Fast Refresh re-evaluates an endpoint module against a store that already has its
+ * endpoints registered, which RTK Query warns about ("called `injectEndpoints` to
+ * override already-existing endpointName ..."). Allowing the override in development
+ * makes HMR silent; in production a duplicate name is a real mistake, so it still warns.
+ */
+export const OVERRIDE_ON_HMR = process.env.NODE_ENV !== "production";

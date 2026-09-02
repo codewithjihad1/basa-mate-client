@@ -1,4 +1,4 @@
-import { apiSlice } from "../apiSlice";
+import { apiSlice, OVERRIDE_ON_HMR } from "../apiSlice";
 import { API_BASE_URL } from "@/config/env";
 import type { BasaId, CycleId, CycleReport, Settlement } from "@/types/api";
 
@@ -46,6 +46,7 @@ export const settlementApi = apiSlice.injectEndpoints({
       providesTags: (_r, _e, { cycleId }) => [{ type: "Report", id: cycleId }],
     }),
   }),
+  overrideExisting: OVERRIDE_ON_HMR,
 });
 
 /**

@@ -7,7 +7,7 @@ import {
 import { Mutex } from "@/lib/api/mutex";
 import { API_BASE_URL } from "@/config/env";
 import type { RootState } from "@/store";
-import { clearSession, setAccessToken } from "@/store/slices/authSlice";
+import { clearSession, setAccessToken } from "@/store/slices/authActions";
 
 /**
  * One `fetchBaseQuery` for the whole app.

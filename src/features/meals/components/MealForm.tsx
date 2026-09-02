@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -76,7 +76,9 @@ export function MealForm() {
     if (user?.id && !form.getValues("memberId")) form.setValue("memberId", user.id);
   }, [user?.id, form]);
 
-  const entries = form.watch("entries") ?? [];
+  // `useWatch` rather than `form.watch()`: the latter returns a fresh function each
+  // render, which the React Compiler cannot memoize.
+  const entries = useWatch({ control: form.control, name: "entries" }) ?? [];
   const totalMeals = entries.reduce((sum, entry) => sum + (Number(entry.quantity) || 0), 0);
 
   const onSubmit = async (values: MealFormValues) => {

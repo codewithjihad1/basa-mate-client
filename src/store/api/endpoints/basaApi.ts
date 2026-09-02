@@ -1,4 +1,4 @@
-import { apiSlice } from "../apiSlice";
+import { apiSlice, OVERRIDE_ON_HMR } from "../apiSlice";
 import type {
   Basa,
   BasaId,
@@ -113,6 +113,7 @@ export const basaApi = apiSlice.injectEndpoints({
       invalidatesTags: ["BasaList"],
     }),
   }),
+  overrideExisting: OVERRIDE_ON_HMR,
 });
 
 export const {

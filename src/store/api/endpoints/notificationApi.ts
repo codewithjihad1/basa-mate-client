@@ -1,4 +1,4 @@
-import { apiSlice } from "../apiSlice";
+import { apiSlice, OVERRIDE_ON_HMR } from "../apiSlice";
 import type { AppNotification, NotificationList, PaginationParams } from "@/types/api";
 
 export const notificationApi = apiSlice.injectEndpoints({
@@ -18,6 +18,7 @@ export const notificationApi = apiSlice.injectEndpoints({
       invalidatesTags: ["Notification"],
     }),
   }),
+  overrideExisting: OVERRIDE_ON_HMR,
 });
 
 export const {

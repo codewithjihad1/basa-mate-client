@@ -23,7 +23,8 @@ export function AllocationEditor() {
 
   const method = useWatch({ control, name: "allocationMethod" });
   const amount = Number(useWatch({ control, name: "amount" })) || 0;
-  const allocations = useWatch({ control, name: "allocations" }) ?? [];
+  const watchedAllocations = useWatch({ control, name: "allocations" });
+  const allocations = useMemo(() => watchedAllocations ?? [], [watchedAllocations]);
 
   const includedCount = allocations.filter((allocation) => allocation?.included).length;
 

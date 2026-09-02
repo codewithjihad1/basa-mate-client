@@ -24,13 +24,15 @@ export function GrocerySpendChart({
         byDate.set(day, (byDate.get(day) ?? 0) + parseMoney(expense.amount));
       });
 
-    let running = 0;
+    // Accumulated with `reduce` rather than a mutable counter across `map`, which
+    // reassigns a variable after render and is unsafe under the React Compiler.
     return Array.from(byDate.entries())
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([day, amount]) => {
-        running += amount;
-        return { day: formatDate(day, "dd MMM"), spend: amount, total: running };
-      });
+      .reduce<Array<{ day: string; spend: number; total: number }>>((rows, [day, amount]) => {
+        const total = (rows.at(-1)?.total ?? 0) + amount;
+        rows.push({ day: formatDate(day, "dd MMM"), spend: amount, total });
+        return rows;
+      }, []);
   }, [expenses]);
 
   return (

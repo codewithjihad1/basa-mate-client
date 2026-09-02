@@ -1,4 +1,4 @@
-import { apiSlice } from "../apiSlice";
+import { apiSlice, OVERRIDE_ON_HMR } from "../apiSlice";
 import type {
   BasaId,
   BillingCycle,
@@ -63,6 +63,7 @@ export const cycleApi = apiSlice.injectEndpoints({
       ],
     }),
   }),
+  overrideExisting: OVERRIDE_ON_HMR,
 });
 
 export const {

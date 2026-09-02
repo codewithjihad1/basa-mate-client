@@ -1,4 +1,4 @@
-import { apiSlice } from "../apiSlice";
+import { apiSlice, OVERRIDE_ON_HMR } from "../apiSlice";
 import type {
   BasaId,
   CreateDepositInput,
@@ -54,6 +54,7 @@ export const depositApi = apiSlice.injectEndpoints({
       invalidatesTags: (_r, _e, { basaId, cycleId }) => [...depositWriteTags(basaId, cycleId)],
     }),
   }),
+  overrideExisting: OVERRIDE_ON_HMR,
 });
 
 export const {

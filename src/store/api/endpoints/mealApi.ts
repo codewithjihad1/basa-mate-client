@@ -1,4 +1,4 @@
-import { apiSlice } from "../apiSlice";
+import { apiSlice, OVERRIDE_ON_HMR } from "../apiSlice";
 import type {
   BasaId,
   CreateMealInput,
@@ -65,6 +65,7 @@ export const mealApi = apiSlice.injectEndpoints({
       invalidatesTags: (_r, _e, { basaId, cycleId }) => [...mealWriteTags(basaId, cycleId)],
     }),
   }),
+  overrideExisting: OVERRIDE_ON_HMR,
 });
 
 export const {

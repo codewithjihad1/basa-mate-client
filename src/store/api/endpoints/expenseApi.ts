@@ -1,4 +1,4 @@
-import { apiSlice } from "../apiSlice";
+import { apiSlice, OVERRIDE_ON_HMR } from "../apiSlice";
 import { DEFAULT_PAGE_SIZE } from "@/config/constants";
 import type {
   BasaId,
@@ -32,9 +32,19 @@ export const expenseApi = apiSlice.injectEndpoints({
      * fixed, forward `page`/`limit` and drop `paginateClientSide`.
      */
     listExpenses: builder.query<Paginated<Expense>, CycleScope & ExpenseListParams>({
-      query: ({ basaId, cycleId, page: _page, limit: _limit, ...filters }) => ({
-        url: `/basas/${basaId}/cycles/${cycleId}/expenses`,
-        params: filters,
+      query: (arg) => ({
+        url: `/basas/${arg.basaId}/cycles/${arg.cycleId}/expenses`,
+        // `page`/`limit` are deliberately not forwarded — see the note above.
+        params: {
+          from: arg.from,
+          to: arg.to,
+          categoryId: arg.categoryId,
+          paidBy: arg.paidBy,
+          type: arg.type,
+          search: arg.search,
+          minAmount: arg.minAmount,
+          maxAmount: arg.maxAmount,
+        },
       }),
       transformResponse: (
         response: Paginated<Expense> | Expense[],
@@ -86,6 +96,7 @@ export const expenseApi = apiSlice.injectEndpoints({
       invalidatesTags: (_r, _e, { basaId, cycleId }) => [...expenseWriteTags(basaId, cycleId)],
     }),
   }),
+  overrideExisting: OVERRIDE_ON_HMR,
 });
 
 function paginateClientSide<T>(items: T[], page: number, limit: number): Paginated<T> {
