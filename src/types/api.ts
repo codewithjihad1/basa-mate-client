@@ -177,6 +177,8 @@ export interface Basa {
   currency: string;
   /** Day of month (1–28) the billing cycle rolls over. */
   cycleStartDay: number;
+  /** Human-readable join code, e.g. `BM-A7K9`. */
+  joinCode?: string;
   status: BasaStatus;
   deletedAt?: string | null;
   members?: BasaMember[];
@@ -221,6 +223,36 @@ export interface CreateInvitationInput {
   email: string;
   role?: BasaRole;
   expiresInDays?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Join Requests
+// ---------------------------------------------------------------------------
+
+export type JoinRequestStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELLED";
+
+export interface JoinRequest {
+  id: string;
+  note: string | null;
+  status: JoinRequestStatus;
+  createdAt: string;
+  updatedAt: string;
+  /** Present when viewing own requests or when listing for a basa. */
+  basa?: { id: BasaId; name: string; joinCode: string };
+  /** Present when a basa owner/manager views requests. */
+  user?: { id: UserId; name: string; email: string; avatarUrl: string | null };
+  /** Present after review. */
+  reviewedBy?: UserId | null;
+  reviewedAt?: string | null;
+  /** Present on accepted requests — the created membership. */
+  membershipId?: MemberId | null;
+  /** Role to grant on acceptance. */
+  role?: BasaRole;
+}
+
+export interface CreateJoinRequestInput {
+  joinCode: string;
+  note?: string;
 }
 
 // ---------------------------------------------------------------------------

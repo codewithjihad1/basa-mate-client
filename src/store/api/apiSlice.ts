@@ -19,6 +19,7 @@ export const apiSlice = createApi({
     "BasaList",
     "Member",
     "Invitation",
+    "JoinRequest",
     "Cycle",
     "CycleDashboard",
     "Meal",

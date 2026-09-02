@@ -1,10 +1,9 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { JoinBasaForm } from "@/features/basa/components/JoinBasaForm";
-
-export const metadata: Metadata = { title: "Join a basa" };
+import { JoinRequestForm } from "@/features/members/components/JoinRequestForm";
 
 export default function JoinBasaPage() {
   return (
@@ -21,12 +20,12 @@ export default function JoinBasaPage() {
         <CardHeader>
           <CardTitle>Join a basa</CardTitle>
           <CardDescription>
-            Follow the link in your invitation email, or paste its token below. Your account&apos;s
-            email must match the one that was invited.
+            Enter the basa&apos;s join code to request membership. The owner or manager will review
+            your request before you&apos;re added.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <JoinBasaForm />
+          <JoinRequestForm />
         </CardContent>
       </Card>
     </div>

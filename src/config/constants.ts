@@ -1,4 +1,4 @@
-import type { BasaRole, PaymentMethod, ExpenseType, AllocationMethod } from "@/types/api";
+import type { BasaRole, PaymentMethod, ExpenseType, AllocationMethod, JoinRequestStatus } from "@/types/api";
 
 /** Default currency when a basa has not overridden it (frontend-requirements §29). */
 export const DEFAULT_CURRENCY = "BDT";
@@ -32,6 +32,13 @@ export const ALLOCATION_METHOD_LABELS: Record<AllocationMethod, string> = {
   EQUAL: "Split equally",
   CUSTOM_AMOUNT: "Custom amounts",
   PERCENTAGE: "By percentage",
+};
+
+export const JOIN_REQUEST_STATUS_LABELS: Record<JoinRequestStatus, string> = {
+  PENDING: "Pending",
+  ACCEPTED: "Accepted",
+  REJECTED: "Rejected",
+  CANCELLED: "Cancelled",
 };
 
 /** Keys used for the small amount of state we persist locally (never tokens or roles). */

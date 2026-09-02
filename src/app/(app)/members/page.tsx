@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { RoleGate } from "@/components/common/RoleGate";
 import { MemberTable } from "@/features/members/components/MemberTable";
 import { InvitationList } from "@/features/members/components/InvitationList";
+import { JoinRequestList } from "@/features/members/components/JoinRequestList";
 import { InviteMemberDialog } from "@/features/members/components/InviteMemberDialog";
 
 export default function MembersPage() {
@@ -28,6 +29,7 @@ export default function MembersPage() {
       />
 
       <MemberTable />
+      <JoinRequestList />
       <InvitationList />
 
       <InviteMemberDialog open={inviteOpen} onOpenChange={setInviteOpen} />

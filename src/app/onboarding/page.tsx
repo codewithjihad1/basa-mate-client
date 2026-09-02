@@ -16,7 +16,7 @@ const CHOICES = [
     href: "/onboarding/join-basa",
     icon: UserPlus,
     title: "Join a basa",
-    description: "Accept an invitation from someone already in a basa.",
+    description: "Enter a basa's join code to request membership.",
   },
 ];
 

@@ -49,6 +49,16 @@ export const updateMemberSchema = z.object({
   status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
 });
 
+export const createJoinRequestSchema = z.object({
+  joinCode: z
+    .string()
+    .trim()
+    .min(4, "Enter a join code")
+    .max(8, "Join code must be at most 8 characters")
+    .toUpperCase(),
+  note: optionalText(500, "Note"),
+});
+
 export type CreateBasaInputValues = z.input<typeof createBasaSchema>;
 export type CreateBasaValues = z.output<typeof createBasaSchema>;
 export type UpdateBasaInputValues = z.input<typeof updateBasaSchema>;
@@ -61,3 +71,5 @@ export type InviteMemberInputValues = z.input<typeof inviteMemberSchema>;
 export type InviteMemberValues = z.output<typeof inviteMemberSchema>;
 export type UpdateMemberInputValues = z.input<typeof updateMemberSchema>;
 export type UpdateMemberValues = z.output<typeof updateMemberSchema>;
+export type CreateJoinRequestInputValues = z.input<typeof createJoinRequestSchema>;
+export type CreateJoinRequestValues = z.output<typeof createJoinRequestSchema>;

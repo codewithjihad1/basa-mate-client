@@ -1,8 +1,9 @@
-import { CheckCircle2, Clock, CircleAlert, Lock, RotateCcw, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { CheckCircle2, Clock, CircleAlert, Lock, RotateCcw, ArrowDownLeft, ArrowUpRight, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type {
   CycleStatus,
   InvitationStatus,
+  JoinRequestStatus,
   SettlementItemStatus,
   SettlementStatus,
 } from "@/types/api";
@@ -46,6 +47,13 @@ const INVITATION: Record<InvitationStatus, Descriptor> = {
   EXPIRED: { label: "Expired", variant: "secondary", Icon: CircleAlert },
 };
 
+const JOIN_REQUEST: Record<JoinRequestStatus, Descriptor> = {
+  PENDING: { label: "Pending", variant: "warning", Icon: Clock },
+  ACCEPTED: { label: "Accepted", variant: "success", Icon: CheckCircle2 },
+  REJECTED: { label: "Rejected", variant: "destructive", Icon: XCircle },
+  CANCELLED: { label: "Cancelled", variant: "secondary", Icon: CircleAlert },
+};
+
 function render(descriptor: Descriptor | undefined, fallback: string) {
   if (!descriptor) return <Badge variant="secondary">{fallback}</Badge>;
   const { label, variant, Icon } = descriptor;
@@ -67,3 +75,6 @@ export const SettlementStatusBadge = ({ status }: { status: SettlementStatus }) 
 
 export const InvitationStatusBadge = ({ status }: { status: InvitationStatus }) =>
   render(INVITATION[status], status);
+
+export const JoinRequestStatusBadge = ({ status }: { status: JoinRequestStatus }) =>
+  render(JOIN_REQUEST[status], status);
