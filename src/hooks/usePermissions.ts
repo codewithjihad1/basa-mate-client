@@ -26,7 +26,6 @@ export function usePermissions() {
       canManageDeposits: can(role, "manage_deposits"),
       canFinalizeSettlement: can(role, "finalize_settlement"),
       canEditSettings: can(role, "basa_settings"),
-      canManageSubscription: can(role, "subscription"),
     }),
     [role, check],
   );

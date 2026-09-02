@@ -9,7 +9,6 @@ import {
   Users,
   Bell,
   Settings,
-  CreditCard,
   type LucideIcon,
 } from "lucide-react";
 import type { Permission } from "@/lib/permissions";
@@ -39,7 +38,6 @@ export const MAIN_NAV: NavItem[] = [
 
 export const SECONDARY_NAV: NavItem[] = [
   { href: "/settings", label: "Settings", icon: Settings },
-  { href: "/billing", label: "Billing", icon: CreditCard, permission: "subscription" },
 ];
 
 /** `/meals/history` should still light up the `/meals` item. */

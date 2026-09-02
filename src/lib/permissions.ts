@@ -16,8 +16,7 @@ export type Permission =
   | "manage_deposits"
   | "view_settlement"
   | "finalize_settlement"
-  | "basa_settings"
-  | "subscription";
+  | "basa_settings";
 
 const ROLE_PERMISSIONS: Record<BasaRole, Permission[]> = {
   OWNER: [
@@ -31,7 +30,6 @@ const ROLE_PERMISSIONS: Record<BasaRole, Permission[]> = {
     "view_settlement",
     "finalize_settlement",
     "basa_settings",
-    "subscription",
   ],
   MANAGER: [
     "view_basa",
