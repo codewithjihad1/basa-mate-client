@@ -1,0 +1,215 @@
+"use client";
+
+import { useEffect, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { EmptyState } from "@/components/common/EmptyState";
+import {
+  mealFormSchema,
+  type MealFormInputValues,
+  type MealFormValues,
+} from "@/lib/validation/transactions";
+import { applyApiErrorToForm } from "@/lib/api/formErrors";
+import { useActiveBasa } from "@/hooks/useActiveBasa";
+import { useActiveCycle } from "@/hooks/useActiveCycle";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/hooks/useAuth";
+import { useCreateMealMutation } from "@/store/api/endpoints/mealApi";
+import { todayInputValue } from "@/lib/utils/date";
+import type { BasaId, CycleId } from "@/types/api";
+
+/**
+ * Daily meal entry (frontend-requirements §10.1).
+ *
+ * `POST /meals` takes the eater's **user id** in its `memberId` field, not the member
+ * id (docs/API.md §IDs) — the "who ate" select is therefore keyed by `user.id`.
+ * A plain MEMBER may only record their own meals, so the select is locked for them.
+ */
+export function MealForm() {
+  const { basaId, members, mealTypes } = useActiveBasa();
+  const { cycleId, isClosed } = useActiveCycle();
+  const { canEditOthersMeals } = usePermissions();
+  const { user } = useAuth();
+  const [createMeal, { isLoading }] = useCreateMealMutation();
+
+  const defaultEntries = useMemo(
+    () => mealTypes.map((type) => ({ mealTypeId: type.id, quantity: "0" })),
+    [mealTypes],
+  );
+
+  const form = useForm<MealFormInputValues, unknown, MealFormValues>({
+    resolver: zodResolver(mealFormSchema),
+    defaultValues: {
+      memberId: user?.id ?? "",
+      date: todayInputValue(),
+      entries: defaultEntries,
+    },
+  });
+
+  // Meal types arrive with the basa, which may resolve after the first render.
+  useEffect(() => {
+    if (defaultEntries.length > 0 && form.getValues("entries").length === 0) {
+      form.setValue("entries", defaultEntries);
+    }
+  }, [defaultEntries, form]);
+
+  useEffect(() => {
+    if (user?.id && !form.getValues("memberId")) form.setValue("memberId", user.id);
+  }, [user?.id, form]);
+
+  const entries = form.watch("entries") ?? [];
+  const totalMeals = entries.reduce((sum, entry) => sum + (Number(entry.quantity) || 0), 0);
+
+  const onSubmit = async (values: MealFormValues) => {
+    try {
+      await createMeal({
+        basaId: basaId as BasaId,
+        cycleId: cycleId as CycleId,
+        memberId: values.memberId,
+        date: values.date,
+        // Zero-quantity rows are dropped: the server requires every entry to be > 0.
+        entries: values.entries.filter((entry) => entry.quantity > 0),
+      }).unwrap();
+
+      toast.success("Meals saved");
+      form.reset({ ...form.getValues(), entries: defaultEntries });
+    } catch (error) {
+      applyApiErrorToForm(error, form.setError);
+    }
+  };
+
+  if (mealTypes.length === 0) {
+    return (
+      <EmptyState
+        title="No meal types configured"
+        description="Add meal types in basa settings before logging meals."
+      />
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Log meals</CardTitle>
+        <CardDescription>
+          {isClosed
+            ? "This cycle is closed — meals can no longer be edited."
+            : "Enter how many of each meal were eaten."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="memberId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Who ate</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={!canEditOthersMeals || isClosed}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a roommate" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {members.map((member) => (
+                          <SelectItem key={member.id} value={member.userId}>
+                            {member.user?.name ?? "Unknown"}
+                            {member.userId === user?.id ? " (you)" : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" disabled={isClosed} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <fieldset className="space-y-3" disabled={isClosed}>
+              <legend className="text-sm font-medium">Meals</legend>
+              {mealTypes.map((mealType, index) => (
+                <FormField
+                  key={mealType.id}
+                  control={form.control}
+                  name={`entries.${index}.quantity`}
+                  render={({ field }) => (
+                    <FormItem className="flex-row items-center justify-between gap-4">
+                      <FormLabel className="font-normal">{mealType.name}</FormLabel>
+                      <div className="w-24">
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={0}
+                            step="0.5"
+                            inputMode="decimal"
+                            className="text-right tabular"
+                            {...field}
+                          />
+                        </FormControl>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              ))}
+            </fieldset>
+
+            {form.formState.errors.entries?.message ? (
+              <p role="alert" className="text-xs font-medium text-destructive">
+                {form.formState.errors.entries.message}
+              </p>
+            ) : null}
+
+            <div className="flex items-center justify-between border-t border-border pt-4">
+              <p className="text-sm text-muted-foreground">
+                Total meals: <span className="tabular font-medium text-foreground">{totalMeals}</span>
+              </p>
+              <Button type="submit" loading={isLoading} disabled={isClosed}>
+                Save meals
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  );
+}
