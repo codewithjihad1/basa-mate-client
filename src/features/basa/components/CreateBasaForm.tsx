@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -45,7 +44,6 @@ interface CreateBasaFormProps {
  * expense categories server-side, so the app is immediately usable afterwards.
  */
 export function CreateBasaForm({ redirectTo = "/dashboard" }: CreateBasaFormProps) {
-  const router = useRouter();
   const dispatch = useAppDispatch();
   const [createBasa, { isLoading }] = useCreateBasaMutation();
 
@@ -61,7 +59,9 @@ export function CreateBasaForm({ redirectTo = "/dashboard" }: CreateBasaFormProp
       const basa = await createBasa(values).unwrap();
       dispatch(setActiveBasa(basa.id));
       toast.success(`${basa.name} is ready`);
-      router.replace(redirectTo);
+      // A fresh document navigation reliably picks up the newly persisted active
+      // basa before the dashboard guard runs.
+      window.location.replace(redirectTo);
     } catch (error) {
       applyApiErrorToForm(error, form.setError);
     }
