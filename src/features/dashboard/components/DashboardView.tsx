@@ -30,7 +30,7 @@ import { useActiveCycle } from "@/hooks/useActiveCycle";
 import { useGetCycleDashboardQuery } from "@/store/api/endpoints/cycleApi";
 import { useGetMealSummaryQuery } from "@/store/api/endpoints/mealApi";
 import { useListExpensesQuery } from "@/store/api/endpoints/expenseApi";
-import { formatQuantity } from "@/lib/utils/money";
+import { formatQuantity, parseMoney, roundMoney } from "@/lib/utils/money";
 import type { BasaId, CycleId } from "@/types/api";
 
 const QUICK_ACTIONS = [
@@ -80,6 +80,10 @@ export function DashboardView() {
 
   const dashboard = dashboardQuery.data;
   const isLoading = cycleLoading || dashboardQuery.isLoading;
+  const totalMeals = parseMoney(dashboard?.totalMeals);
+  const mealRate = totalMeals > 0
+    ? roundMoney(parseMoney(dashboard?.totalGroceryCost) / totalMeals)
+    : 0;
 
   return (
     <>
@@ -120,13 +124,12 @@ export function DashboardView() {
           />
           <StatCard
             label="Meal rate"
-            value={<MoneyDisplay value={dashboard?.mealRate} />}
+            value={<MoneyDisplay value={mealRate} />}
             icon={Scale}
-            // The API returns 0 until a settlement exists — say so rather than showing ৳0.
             hint={
-              Number(dashboard?.mealRate ?? 0) > 0
+              totalMeals > 0
                 ? "Grocery cost ÷ total meals"
-                : "Available once the settlement is generated"
+                : "Add meals to calculate the rate"
             }
           />
           <StatCard
