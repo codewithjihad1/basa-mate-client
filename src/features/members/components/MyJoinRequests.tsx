@@ -17,12 +17,16 @@ import { TableSkeleton } from "@/components/common/LoadingSkeleton";
 import { JoinRequestStatusBadge } from "@/components/common/StatusBadge";
 import { ROLE_LABELS } from "@/config/constants";
 import { formatDate } from "@/lib/utils/date";
+import { useAcceptedJoinRequest } from "@/hooks/useAcceptedJoinRequest";
 import { useListMyJoinRequestsQuery } from "@/store/api/endpoints/joinRequestApi";
 import type { JoinRequest } from "@/types/api";
 
 /** The authenticated user's own join requests and their progress (docs/API_new.md §Join Requests). */
 export function MyJoinRequests() {
   const { data, isLoading, error, refetch } = useListMyJoinRequestsQuery();
+
+  // Polls in the background and leaves for the dashboard once one is approved.
+  useAcceptedJoinRequest();
 
   if (error) {
     return <ErrorState error={error} title="Couldn't load your join requests" onRetry={refetch} />;
