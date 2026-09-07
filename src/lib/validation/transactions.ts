@@ -16,8 +16,21 @@ import { roundMoney } from "@/lib/utils/money";
 
 export const mealEntrySchema = z.object({
   mealTypeId: z.string().min(1),
-  // Fractions are allowed (a half portion); the server caps quantity at 1000.
-  quantity: numericField({ required: "Enter 0 if none", invalid: "Enter a number" })
+  // Empty values are equivalent to zero; fractions are allowed and the server
+  // caps quantity at 1000.
+  quantity: z
+    .string()
+    .trim()
+    .transform((value, ctx) => {
+      if (value === "") return 0;
+
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Enter a number" });
+        return z.NEVER;
+      }
+      return parsed;
+    })
     .refine((value) => value >= 0, "Cannot be negative")
     .refine((value) => value <= 1000, "That's more than 1000 meals"),
 });
@@ -28,10 +41,6 @@ export const mealFormSchema = z
     memberId: z.string().min(1, "Choose who ate"),
     date: dateSchema,
     entries: z.array(mealEntrySchema).min(1, "Add at least one meal type"),
-  })
-  .refine((values) => values.entries.some((entry) => entry.quantity > 0), {
-    message: "Enter at least one meal before saving",
-    path: ["entries"],
   });
 
 export const updateMealSchema = z.object({

@@ -16,6 +16,7 @@ import { mealFormSchema, type MealFormInputValues, type MealFormValues } from '@
 import { useCreateMealMutation } from '@/store/api/endpoints/mealApi';
 import type { BasaId, CycleId } from '@/types/api';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Minus, Plus } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -35,7 +36,7 @@ export function MealForm() {
     const [createMeal, { isLoading }] = useCreateMealMutation();
 
     const defaultEntries = useMemo(
-        () => mealTypes.map((type) => ({ mealTypeId: type.id, quantity: '' })),
+        () => mealTypes.map((type) => ({ mealTypeId: type.id, quantity: '0' })),
         [mealTypes],
     );
 
@@ -156,24 +157,42 @@ export function MealForm() {
                                     key={mealType.id}
                                     control={form.control}
                                     name={`entries.${index}.quantity`}
-                                    render={({ field }) => (
-                                        <FormItem className="flex-row items-center justify-between gap-4">
-                                            <FormLabel className="font-normal">{mealType.name}</FormLabel>
-                                            <div className="w-24">
-                                                <FormControl>
-                                                    <Input
-                                                        type="number"
-                                                        min={0}
-                                                        step="1"
-                                                        inputMode="decimal"
-                                                        className="text-right tabular"
-                                                        placeholder="0"
-                                                        {...field}
-                                                    />
-                                                </FormControl>
-                                            </div>
-                                        </FormItem>
-                                    )}
+                                    render={({ field }) => {
+                                        const quantity = Number(field.value) || 0;
+
+                                        return (
+                                            <FormItem className="flex-row items-center justify-between gap-4">
+                                                <FormLabel className="font-normal">{mealType.name}</FormLabel>
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="icon"
+                                                        aria-label={`Decrease ${mealType.name} meals`}
+                                                        disabled={quantity <= 0}
+                                                        onClick={() => field.onChange(String(quantity - 1))}>
+                                                        <Minus aria-hidden />
+                                                    </Button>
+                                                    <output
+                                                        aria-live="polite"
+                                                        className="w-8 text-center tabular font-medium"
+                                                        aria-label={`${mealType.name} meals`}>
+                                                        {quantity}
+                                                    </output>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="icon"
+                                                        aria-label={`Increase ${mealType.name} meals`}
+                                                        disabled={quantity >= 1000}
+                                                        onClick={() => field.onChange(String(quantity + 1))}>
+                                                        <Plus aria-hidden />
+                                                    </Button>
+                                                    <FormMessage />
+                                                </div>
+                                            </FormItem>
+                                        );
+                                    }}
                                 />
                             ))}
                         </fieldset>
@@ -188,7 +207,7 @@ export function MealForm() {
                             <p className="text-sm text-muted-foreground">
                                 Total meals: <span className="tabular font-medium text-foreground">{totalMeals}</span>
                             </p>
-                            <Button type="submit" loading={isLoading} disabled={isClosed}>
+                            <Button type="submit" loading={isLoading} disabled={isClosed} className="cursor-pointer">
                                 Save meals
                             </Button>
                         </div>
