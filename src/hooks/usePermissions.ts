@@ -24,6 +24,10 @@ export function usePermissions() {
       canEditOthersMeals: can(role, "edit_others_meals"),
       canWriteExpenses: can(role, "add_expense"),
       canManageDeposits: can(role, "manage_deposits"),
+      /** OWNER or MANAGER — can approve/reject member-created expenses. */
+      canReviewExpenses: isManagerOrAbove(role),
+      /** OWNER or MANAGER — can approve/reject member-recorded deposits. */
+      canReviewDeposits: isManagerOrAbove(role),
       canFinalizeSettlement: can(role, "finalize_settlement"),
       canEditSettings: can(role, "basa_settings"),
     }),

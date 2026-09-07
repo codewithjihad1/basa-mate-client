@@ -51,7 +51,11 @@ export function DashboardView() {
   const dashboardQuery = useGetCycleDashboardQuery(scope, { skip });
   const mealSummaryQuery = useGetMealSummaryQuery(scope, { skip });
   // The list is fetched unpaginated so the charts can aggregate the whole cycle.
-  const expensesQuery = useListExpensesQuery({ ...scope, limit: 500 }, { skip });
+  // Only `APPROVED` expenses feed the dashboard totals, so the charts match it.
+  const expensesQuery = useListExpensesQuery(
+    { ...scope, limit: 500, status: "APPROVED" },
+    { skip },
+  );
 
   if (cycleError) return <ErrorState error={cycleError} title="Couldn't load billing cycles" />;
 

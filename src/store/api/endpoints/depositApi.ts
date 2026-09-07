@@ -4,6 +4,7 @@ import type {
   CreateDepositInput,
   CycleId,
   Deposit,
+  DepositListParams,
   UpdateDepositInput,
 } from "@/types/api";
 
@@ -19,8 +20,11 @@ const depositWriteTags = (basaId: BasaId, cycleId: CycleId) =>
 export const depositApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     /** All non-deleted deposits in the cycle, newest first. Not paginated by the API. */
-    listDeposits: builder.query<Deposit[], CycleScope>({
-      query: ({ basaId, cycleId }) => `/basas/${basaId}/cycles/${cycleId}/deposits`,
+    listDeposits: builder.query<Deposit[], CycleScope & DepositListParams>({
+      query: ({ basaId, cycleId, status }) => ({
+        url: `/basas/${basaId}/cycles/${cycleId}/deposits`,
+        params: { status },
+      }),
       providesTags: (_r, _e, { cycleId }) => [{ type: "Deposit", id: cycleId }],
     }),
 
@@ -53,6 +57,21 @@ export const depositApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (_r, _e, { basaId, cycleId }) => [...depositWriteTags(basaId, cycleId)],
     }),
+
+    /** OWNER/MANAGER review: approve or reject a `PENDING` deposit (docs/API.md §approve). */
+    reviewDeposit: builder.mutation<
+      Deposit,
+      CycleScope & { depositId: string; action: "approve" | "reject" }
+    >({
+      query: ({ basaId, cycleId, depositId, action }) => ({
+        url: `/basas/${basaId}/cycles/${cycleId}/deposits/${depositId}/${action}`,
+        method: "POST",
+      }),
+      invalidatesTags: (_r, _e, { basaId, cycleId }) => [
+        ...depositWriteTags(basaId, cycleId),
+        "Notification",
+      ],
+    }),
   }),
   overrideExisting: OVERRIDE_ON_HMR,
 });
@@ -62,4 +81,5 @@ export const {
   useCreateDepositMutation,
   useUpdateDepositMutation,
   useDeleteDepositMutation,
+  useReviewDepositMutation,
 } = depositApi;

@@ -58,6 +58,9 @@ export type ApiErrorCode =
   | "CYCLE_CLOSED"
   | "INVALID_MEAL"
   | "INVALID_EXPENSE"
+  | "INVALID_DEPOSIT"
+  | "EXPENSE_ALREADY_REVIEWED"
+  | "DEPOSIT_ALREADY_REVIEWED"
   | "INVALID_ALLOCATION"
   | "INSUFFICIENT_PERMISSION"
   | "SETTLEMENT_NOT_FOUND"
@@ -341,6 +344,13 @@ export interface MealSummary {
 export type ExpenseType = "GROCERY" | "SHARED" | "OTHER";
 export type AllocationMethod = "EQUAL" | "CUSTOM_AMOUNT" | "PERCENTAGE";
 
+/**
+ * Approval state for expenses and deposits (docs/API.md §Expense approval workflow).
+ * A `MEMBER`-created record starts `PENDING`; an OWNER or MANAGER moves it to
+ * `APPROVED` or `REJECTED`. Only `APPROVED` records feed the settlement.
+ */
+export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
+
 export interface ExpenseAllocation {
   id: string;
   expenseId: string;
@@ -364,6 +374,11 @@ export interface Expense {
   notes: string | null;
   allocationMethod: AllocationMethod | null;
   softDeleted?: boolean;
+  /** `PENDING` until an OWNER/MANAGER reviews a member-created expense. */
+  approvalStatus: ApprovalStatus;
+  /** The OWNER/MANAGER who approved or rejected it; `null` while `PENDING`. */
+  reviewedBy: UserId | null;
+  reviewedAt: string | null;
   category?: ExpenseCategory | null;
   paidBy?: { id: MemberId; user: { id: UserId; name: string } } | null;
   allocations?: ExpenseAllocation[];
@@ -400,6 +415,8 @@ export interface ExpenseListParams extends PaginationParams {
   paidBy?: MemberId;
   type?: ExpenseType;
   search?: string;
+  /** Filter by approval status (docs/API.md §GET /expenses). */
+  status?: ApprovalStatus;
   minAmount?: number;
   maxAmount?: number;
 }
@@ -422,6 +439,11 @@ export interface Deposit {
   recordedBy: UserId;
   transactionDate: string;
   softDeleted: boolean;
+  /** `PENDING` until an OWNER/MANAGER reviews a member-recorded deposit. */
+  approvalStatus: ApprovalStatus;
+  /** The OWNER/MANAGER who approved or rejected it; `null` while `PENDING`. */
+  reviewedBy: UserId | null;
+  reviewedAt: string | null;
   member?: { id: MemberId; role: BasaRole; user: { name: string } };
 }
 
@@ -436,6 +458,11 @@ export interface CreateDepositInput {
 }
 
 export type UpdateDepositInput = Partial<CreateDepositInput>;
+
+export interface DepositListParams {
+  /** Filter by approval status — managers use `PENDING` to build a review queue. */
+  status?: ApprovalStatus;
+}
 
 // ---------------------------------------------------------------------------
 // Settlement

@@ -43,10 +43,18 @@ const ROLE_PERMISSIONS: Record<BasaRole, Permission[]> = {
     "finalize_settlement",
     "basa_settings",
   ],
-  // `add_expense` is in the server's table for MEMBER but ExpenseService rejects it,
-  // so it is omitted here — the UI must match the behaviour, not the table
-  // (docs/API.md §Known gaps #6).
-  MEMBER: ["view_basa", "add_meals", "edit_own_meals", "view_settlement"],
+  // `MEMBER` can create expenses and deposits, but every record they create starts
+  // as `PENDING` and only counts toward the settlement once an OWNER or MANAGER
+  // approves it (docs/API.md §Roles and permissions). The backend also lets a
+  // member edit/delete their own record only while it is still `PENDING`.
+  MEMBER: [
+    "view_basa",
+    "add_meals",
+    "edit_own_meals",
+    "add_expense",
+    "manage_deposits",
+    "view_settlement",
+  ],
   VIEWER: ["view_basa", "view_settlement"],
 };
 

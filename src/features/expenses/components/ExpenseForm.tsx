@@ -34,6 +34,7 @@ import { ALLOCATION_METHOD_LABELS } from "@/config/constants";
 import { applyApiErrorToForm } from "@/lib/api/formErrors";
 import { useActiveBasa } from "@/hooks/useActiveBasa";
 import { useActiveCycle } from "@/hooks/useActiveCycle";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   useCreateExpenseMutation,
   useUpdateExpenseMutation,
@@ -61,6 +62,7 @@ export function ExpenseForm({ type, expense, redirectTo }: ExpenseFormProps) {
   const router = useRouter();
   const { basaId, members, expenseCategories } = useActiveBasa();
   const { cycleId, isClosed } = useActiveCycle();
+  const { canReviewExpenses } = usePermissions();
 
   const [createExpense, { isLoading: isCreating }] = useCreateExpenseMutation();
   const [updateExpense, { isLoading: isUpdating }] = useUpdateExpenseMutation();
@@ -152,7 +154,13 @@ export function ExpenseForm({ type, expense, redirectTo }: ExpenseFormProps) {
           cycleId: cycleId as CycleId,
           ...payload,
         }).unwrap();
-        toast.success("Expense recorded");
+        // A manager/owner's expense is APPROVED immediately; a member's needs the
+        // owner or manager to review it first (docs/API.md §Expense approval workflow).
+        toast.success(
+          canReviewExpenses
+            ? "Expense recorded"
+            : "Expense recorded — pending owner or manager approval",
+        );
       }
       router.push(redirectTo);
     } catch (error) {
@@ -364,6 +372,12 @@ export function ExpenseForm({ type, expense, redirectTo }: ExpenseFormProps) {
             {expense ? "Save changes" : "Record expense"}
           </Button>
         </div>
+
+        {!expense && !canReviewExpenses ? (
+          <p className="text-sm text-muted-foreground">
+            A member or manager will review this before it counts toward the settlement.
+          </p>
+        ) : null}
 
         {isClosed ? (
           <p className="text-sm text-muted-foreground">

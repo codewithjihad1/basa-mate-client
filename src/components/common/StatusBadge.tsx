@@ -1,6 +1,7 @@
 import { CheckCircle2, Clock, CircleAlert, Lock, RotateCcw, ArrowDownLeft, ArrowUpRight, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type {
+  ApprovalStatus,
   CycleStatus,
   InvitationStatus,
   JoinRequestStatus,
@@ -54,6 +55,12 @@ const JOIN_REQUEST: Record<JoinRequestStatus, Descriptor> = {
   CANCELLED: { label: "Cancelled", variant: "secondary", Icon: CircleAlert },
 };
 
+const APPROVAL: Record<ApprovalStatus, Descriptor> = {
+  PENDING: { label: "Pending", variant: "warning", Icon: Clock },
+  APPROVED: { label: "Approved", variant: "success", Icon: CheckCircle2 },
+  REJECTED: { label: "Rejected", variant: "destructive", Icon: XCircle },
+};
+
 function render(descriptor: Descriptor | undefined, fallback: string) {
   if (!descriptor) return <Badge variant="secondary">{fallback}</Badge>;
   const { label, variant, Icon } = descriptor;
@@ -78,3 +85,6 @@ export const InvitationStatusBadge = ({ status }: { status: InvitationStatus }) 
 
 export const JoinRequestStatusBadge = ({ status }: { status: JoinRequestStatus }) =>
   render(JOIN_REQUEST[status], status);
+
+export const ApprovalStatusBadge = ({ status }: { status: ApprovalStatus }) =>
+  render(APPROVAL[status], status);

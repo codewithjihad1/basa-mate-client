@@ -42,6 +42,7 @@ export const expenseApi = apiSlice.injectEndpoints({
           paidBy: arg.paidBy,
           type: arg.type,
           search: arg.search,
+          status: arg.status,
           minAmount: arg.minAmount,
           maxAmount: arg.maxAmount,
         },
@@ -95,6 +96,22 @@ export const expenseApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (_r, _e, { basaId, cycleId }) => [...expenseWriteTags(basaId, cycleId)],
     }),
+
+    /** OWNER/MANAGER review: approve a `PENDING` expense (docs/API.md §approve). */
+    reviewExpense: builder.mutation<
+      Expense,
+      CycleScope & { expenseId: string; action: "approve" | "reject" }
+    >({
+      query: ({ basaId, cycleId, expenseId, action }) => ({
+        url: `/basas/${basaId}/cycles/${cycleId}/expenses/${expenseId}/${action}`,
+        method: "POST",
+      }),
+      invalidatesTags: (_r, _e, { basaId, cycleId, expenseId }) => [
+        ...expenseWriteTags(basaId, cycleId),
+        { type: "Expense", id: expenseId },
+        "Notification",
+      ],
+    }),
   }),
   overrideExisting: OVERRIDE_ON_HMR,
 });
@@ -114,4 +131,5 @@ export const {
   useCreateExpenseMutation,
   useUpdateExpenseMutation,
   useDeleteExpenseMutation,
+  useReviewExpenseMutation,
 } = expenseApi;

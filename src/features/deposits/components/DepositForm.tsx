@@ -39,6 +39,7 @@ import { PAYMENT_METHOD_LABELS } from "@/config/constants";
 import { applyApiErrorToForm } from "@/lib/api/formErrors";
 import { useActiveBasa } from "@/hooks/useActiveBasa";
 import { useActiveCycle } from "@/hooks/useActiveCycle";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useCreateDepositMutation } from "@/store/api/endpoints/depositApi";
 import { todayInputValue } from "@/lib/utils/date";
 import type { BasaId, CycleId, PaymentMethod } from "@/types/api";
@@ -58,6 +59,7 @@ export function DepositForm({
 }) {
   const { basaId, members } = useActiveBasa();
   const { cycleId } = useActiveCycle();
+  const { canReviewDeposits } = usePermissions();
   const [createDeposit, { isLoading }] = useCreateDepositMutation();
 
   const form = useForm<DepositFormInputValues, unknown, DepositFormValues>({
@@ -82,7 +84,11 @@ export function DepositForm({
         ...values,
       }).unwrap();
 
-      toast.success("Deposit recorded");
+      toast.success(
+        canReviewDeposits
+          ? "Deposit recorded"
+          : "Deposit recorded — pending owner or manager approval",
+      );
       form.reset({ ...form.getValues(), amount: "", reference: "", notes: "" });
       onOpenChange(false);
     } catch (error) {

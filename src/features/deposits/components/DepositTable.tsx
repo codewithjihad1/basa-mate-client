@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Trash2, Wallet } from "lucide-react";
+import { Check, Plus, Trash2, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,37 +15,57 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { TableSkeleton } from "@/components/common/LoadingSkeleton";
 import { MoneyDisplay } from "@/components/common/MoneyDisplay";
+import { ApprovalStatusBadge } from "@/components/common/StatusBadge";
 import { DepositForm } from "./DepositForm";
 import { useActiveBasa } from "@/hooks/useActiveBasa";
 import { useActiveCycle } from "@/hooks/useActiveCycle";
+import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import {
   useDeleteDepositMutation,
   useListDepositsQuery,
+  useReviewDepositMutation,
 } from "@/store/api/endpoints/depositApi";
 import { PAYMENT_METHOD_LABELS } from "@/config/constants";
 import { formatDate } from "@/lib/utils/date";
 import { sumMoney } from "@/lib/utils/money";
 import { getErrorMessage } from "@/lib/api/errors";
-import type { BasaId, CycleId, Deposit } from "@/types/api";
+import type { ApprovalStatus, BasaId, CycleId, Deposit } from "@/types/api";
+
+const ALL = "__all__";
 
 /** Deposit history for the cycle (frontend-requirements §13). */
 export function DepositTable() {
   const { basaId } = useActiveBasa();
   const { cycleId, isClosed } = useActiveCycle();
-  const { canManageDeposits } = usePermissions();
+  const { user } = useAuth();
+  const { canManageDeposits, canReviewDeposits } = usePermissions();
 
+  const [status, setStatus] = useState(ALL);
   const [formOpen, setFormOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Deposit | null>(null);
   const [deleteDeposit] = useDeleteDepositMutation();
+  const [reviewDeposit, { isLoading: isReviewing }] = useReviewDepositMutation();
 
   const { data, isLoading, error, refetch } = useListDepositsQuery(
-    { basaId: basaId as BasaId, cycleId: cycleId as CycleId },
+    {
+      basaId: basaId as BasaId,
+      cycleId: cycleId as CycleId,
+      status: status === ALL ? undefined : (status as ApprovalStatus),
+    },
     { skip: !basaId || !cycleId },
   );
 
@@ -68,6 +88,24 @@ export function DepositTable() {
     }
   };
 
+  const handleReview = async (deposit: Deposit, action: "approve" | "reject") => {
+    try {
+      await reviewDeposit({
+        basaId: basaId as BasaId,
+        cycleId: cycleId as CycleId,
+        depositId: deposit.id,
+        action,
+      }).unwrap();
+      toast.success(action === "approve" ? "Deposit approved" : "Deposit rejected");
+    } catch (caught) {
+      toast.error(getErrorMessage(caught));
+    }
+  };
+
+  /** Owners/managers may delete any record; members only their own, while pending. */
+  const canDelete = (deposit: Deposit) =>
+    canReviewDeposits || (deposit.approvalStatus === "PENDING" && deposit.recordedBy === user?.id);
+
   if (error) return <ErrorState error={error} title="Couldn't load deposits" onRetry={refetch} />;
 
   return (
@@ -82,9 +120,27 @@ export function DepositTable() {
       ) : null}
 
       <Card>
-        <CardContent className="pt-5">
+        <CardContent className="space-y-4 pt-5">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="deposit-status">Status</Label>
+            <Select
+              value={status}
+              onValueChange={(value) => setStatus(value)}
+            >
+              <SelectTrigger id="deposit-status" className="max-w-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>All statuses</SelectItem>
+                <SelectItem value="PENDING">Pending review</SelectItem>
+                <SelectItem value="APPROVED">Approved</SelectItem>
+                <SelectItem value="REJECTED">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {isLoading ? (
-            <TableSkeleton columns={6} />
+            <TableSkeleton columns={7} />
           ) : deposits.length === 0 ? (
             <EmptyState
               icon={Wallet}
@@ -108,10 +164,11 @@ export function DepositTable() {
                   <TableHead scope="col">Date</TableHead>
                   <TableHead scope="col">Method</TableHead>
                   <TableHead scope="col">Reference</TableHead>
+                  <TableHead scope="col">Status</TableHead>
                   <TableHead scope="col" className="text-right">
                     Amount
                   </TableHead>
-                  <TableHead scope="col" className="w-12">
+                  <TableHead scope="col" className="w-64">
                     <span className="sr-only">Actions</span>
                   </TableHead>
                 </TableRow>
@@ -134,20 +191,49 @@ export function DepositTable() {
                     <TableCell className="max-w-40 truncate text-muted-foreground">
                       {deposit.reference || "—"}
                     </TableCell>
+                    <TableCell>
+                      <ApprovalStatusBadge status={deposit.approvalStatus} />
+                    </TableCell>
                     <TableCell className="text-right">
                       <MoneyDisplay value={deposit.amount} />
                     </TableCell>
                     <TableCell>
-                      {canManageDeposits ? (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={isClosed}
-                          aria-label={`Delete deposit from ${deposit.member?.user?.name ?? "member"}`}
-                          onClick={() => setPendingDelete(deposit)}
-                        >
-                          <Trash2 className="text-destructive" aria-hidden />
-                        </Button>
+                      {canReviewDeposits || canDelete(deposit) ? (
+                        <div className="flex justify-end gap-1">
+                          {deposit.approvalStatus === "PENDING" && canReviewDeposits ? (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled={isClosed || isReviewing}
+                                aria-label={`Approve ${deposit.member?.user?.name ?? "deposit"}'s deposit`}
+                                onClick={() => handleReview(deposit, "approve")}
+                              >
+                                <Check className="text-[var(--success)]" aria-hidden />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled={isClosed || isReviewing}
+                                aria-label={`Reject ${deposit.member?.user?.name ?? "deposit"}'s deposit`}
+                                onClick={() => handleReview(deposit, "reject")}
+                              >
+                                <X className="text-destructive" aria-hidden />
+                              </Button>
+                            </>
+                          ) : null}
+                          {canDelete(deposit) ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              disabled={isClosed}
+                              aria-label={`Delete deposit from ${deposit.member?.user?.name ?? "member"}`}
+                              onClick={() => setPendingDelete(deposit)}
+                            >
+                              <Trash2 className="text-destructive" aria-hidden />
+                            </Button>
+                          ) : null}
+                        </div>
                       ) : null}
                     </TableCell>
                   </TableRow>
@@ -156,7 +242,7 @@ export function DepositTable() {
 
               <TableFooter>
                 <TableRow>
-                  <TableCell colSpan={4}>Total deposited</TableCell>
+                  <TableCell colSpan={5}>Total deposited</TableCell>
                   <TableCell className="text-right">
                     <MoneyDisplay value={total} />
                   </TableCell>
