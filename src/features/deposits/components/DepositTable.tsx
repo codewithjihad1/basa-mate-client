@@ -6,15 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { TableCell, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -24,9 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
-import { EmptyState } from "@/components/common/EmptyState";
-import { ErrorState } from "@/components/common/ErrorState";
-import { TableSkeleton } from "@/components/common/LoadingSkeleton";
+import { DataTable } from "@/components/common/DataTable";
 import { MoneyDisplay } from "@/components/common/MoneyDisplay";
 import { ApprovalStatusBadge } from "@/components/common/StatusBadge";
 import { DepositForm } from "./DepositForm";
@@ -102,11 +92,9 @@ export function DepositTable() {
     }
   };
 
-  /** Owners/managers may delete any record; members only their own, while pending. */
+/** Owners/managers may delete any record; members only their own, while pending. */
   const canDelete = (deposit: Deposit) =>
     canReviewDeposits || (deposit.approvalStatus === "PENDING" && deposit.recordedBy === user?.id);
-
-  if (error) return <ErrorState error={error} title="Couldn't load deposits" onRetry={refetch} />;
 
   return (
     <>
@@ -139,118 +127,116 @@ export function DepositTable() {
             </Select>
           </div>
 
-          {isLoading ? (
-            <TableSkeleton columns={7} />
-          ) : deposits.length === 0 ? (
-            <EmptyState
-              icon={Wallet}
-              title="No deposits recorded yet."
-              description="Deposits are what each roommate has paid into the fund this cycle."
-              action={
-                canManageDeposits && !isClosed ? (
-                  <Button onClick={() => setFormOpen(true)}>
-                    <Plus aria-hidden />
-                    Add deposit
-                  </Button>
-                ) : undefined
-              }
-              className="border-0"
-            />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead scope="col">Roommate</TableHead>
-                  <TableHead scope="col">Date</TableHead>
-                  <TableHead scope="col">Method</TableHead>
-                  <TableHead scope="col">Reference</TableHead>
-                  <TableHead scope="col">Status</TableHead>
-                  <TableHead scope="col" className="text-right">
-                    Amount
-                  </TableHead>
-                  <TableHead scope="col" className="w-64">
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {deposits.map((deposit) => (
-                  <TableRow key={deposit.id}>
-                    <TableCell className="font-medium">
-                      {deposit.member?.user?.name ?? "Unknown"}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {formatDate(deposit.transactionDate)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {PAYMENT_METHOD_LABELS[deposit.paymentMethod]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-40 truncate text-muted-foreground">
-                      {deposit.reference || "—"}
-                    </TableCell>
-                    <TableCell>
-                      <ApprovalStatusBadge status={deposit.approvalStatus} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <MoneyDisplay value={deposit.amount} />
-                    </TableCell>
-                    <TableCell>
-                      {canReviewDeposits || canDelete(deposit) ? (
-                        <div className="flex justify-end gap-1">
-                          {deposit.approvalStatus === "PENDING" && canReviewDeposits ? (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                disabled={isClosed || isReviewing}
-                                aria-label={`Approve ${deposit.member?.user?.name ?? "deposit"}'s deposit`}
-                                onClick={() => handleReview(deposit, "approve")}
-                              >
-                                <Check className="text-[var(--success)]" aria-hidden />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                disabled={isClosed || isReviewing}
-                                aria-label={`Reject ${deposit.member?.user?.name ?? "deposit"}'s deposit`}
-                                onClick={() => handleReview(deposit, "reject")}
-                              >
-                                <X className="text-destructive" aria-hidden />
-                              </Button>
-                            </>
-                          ) : null}
-                          {canDelete(deposit) ? (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              disabled={isClosed}
-                              aria-label={`Delete deposit from ${deposit.member?.user?.name ?? "member"}`}
-                              onClick={() => setPendingDelete(deposit)}
-                            >
-                              <Trash2 className="text-destructive" aria-hidden />
-                            </Button>
-                          ) : null}
-                        </div>
+          <DataTable
+            columns={[
+              {
+                key: "roommate",
+                header: "Roommate",
+                cell: (deposit) => deposit.member?.user?.name ?? "Unknown",
+                cellClassName: "font-medium",
+              },
+              {
+                key: "date",
+                header: "Date",
+                cell: (deposit) => <span className="whitespace-nowrap">{formatDate(deposit.transactionDate)}</span>,
+              },
+              {
+                key: "method",
+                header: "Method",
+                cell: (deposit) => (
+                  <Badge variant="secondary">
+                    {PAYMENT_METHOD_LABELS[deposit.paymentMethod]}
+                  </Badge>
+                ),
+              },
+              {
+                key: "reference",
+                header: "Reference",
+                cell: (deposit) => deposit.reference || "—",
+                cellClassName: "max-w-40 truncate text-muted-foreground",
+              },
+              {
+                key: "status",
+                header: "Status",
+                cell: (deposit) => <ApprovalStatusBadge status={deposit.approvalStatus} />,
+              },
+              {
+                key: "amount",
+                header: "Amount",
+                align: "right",
+                cell: (deposit) => <MoneyDisplay value={deposit.amount} />,
+              },
+              {
+                key: "actions",
+                header: <span className="sr-only">Actions</span>,
+                headerClassName: "w-64",
+                cell: (deposit) =>
+                  canReviewDeposits || canDelete(deposit) ? (
+                    <div className="flex justify-end gap-1">
+                      {deposit.approvalStatus === "PENDING" && canReviewDeposits ? (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={isClosed || isReviewing}
+                            aria-label={`Approve ${deposit.member?.user?.name ?? "deposit"}'s deposit`}
+                            onClick={() => handleReview(deposit, "approve")}
+                          >
+                            <Check className="text-success" aria-hidden />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={isClosed || isReviewing}
+                            aria-label={`Reject ${deposit.member?.user?.name ?? "deposit"}'s deposit`}
+                            onClick={() => handleReview(deposit, "reject")}
+                          >
+                            <X className="text-destructive" aria-hidden />
+                          </Button>
+                        </>
                       ) : null}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-
-              <TableFooter>
-                <TableRow>
-                  <TableCell colSpan={5}>Total deposited</TableCell>
-                  <TableCell className="text-right">
-                    <MoneyDisplay value={total} />
-                  </TableCell>
-                  <TableCell />
-                </TableRow>
-              </TableFooter>
-            </Table>
-          )}
+                      {canDelete(deposit) ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={isClosed}
+                          aria-label={`Delete deposit from ${deposit.member?.user?.name ?? "member"}`}
+                          onClick={() => setPendingDelete(deposit)}
+                        >
+                          <Trash2 className="text-destructive" aria-hidden />
+                        </Button>
+                      ) : null}
+                    </div>
+                  ) : null,
+              },
+            ]}
+            rows={deposits}
+            rowKey={(deposit) => deposit.id}
+            isLoading={isLoading}
+            error={error}
+            onRetry={refetch}
+            errorTitle="Couldn't load deposits"
+            emptyIcon={Wallet}
+            emptyMessage="No deposits recorded yet."
+            emptyDescription="Deposits are what each roommate has paid into the fund this cycle."
+            emptyAction={
+              canManageDeposits && !isClosed ? (
+                <Button onClick={() => setFormOpen(true)}>
+                  <Plus aria-hidden />
+                  Add deposit
+                </Button>
+              ) : undefined
+            }
+            footer={
+              <TableRow>
+                <TableCell colSpan={5}>Total deposited</TableCell>
+                <TableCell className="text-right">
+                  <MoneyDisplay value={total} />
+                </TableCell>
+                <TableCell />
+              </TableRow>
+            }
+          />
         </CardContent>
       </Card>
 

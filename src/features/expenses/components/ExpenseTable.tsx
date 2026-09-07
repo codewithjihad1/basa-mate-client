@@ -1,11 +1,8 @@
 'use client';
 
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
-import { EmptyState } from '@/components/common/EmptyState';
-import { ErrorState } from '@/components/common/ErrorState';
-import { TableSkeleton } from '@/components/common/LoadingSkeleton';
+import { DataTable } from '@/components/common/DataTable';
 import { MoneyDisplay } from '@/components/common/MoneyDisplay';
-import { Pagination } from '@/components/common/Pagination';
 import { ApprovalStatusBadge } from '@/components/common/StatusBadge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,7 +10,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DEFAULT_PAGE_SIZE } from '@/config/constants';
 import { useActiveBasa } from '@/hooks/useActiveBasa';
 import { useActiveCycle } from '@/hooks/useActiveCycle';
@@ -192,119 +188,89 @@ export function ExpenseTable({ type, basePath, emptyTitle }: ExpenseTableProps) 
                     </div>
                 </div>
 
-                {error ? (
-                    <ErrorState error={error} title="Couldn't load expenses" onRetry={refetch} />
-                ) : isLoading ? (
-                    <TableSkeleton columns={7} />
-                ) : expenses.length === 0 ? (
-                    <EmptyState
-                        icon={Receipt}
-                        title={emptyTitle}
-                        action={
-                            canWriteExpenses && !isClosed ? (
-                                <Button asChild>
-                                    <Link href={`${basePath}/new`}>
-                                        <Plus aria-hidden />
-                                        Add expense
-                                    </Link>
-                                </Button>
-                            ) : undefined
-                        }
-                        className="border-0"
-                    />
-                ) : (
-                    <div aria-busy={isFetching}>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead scope="col">Date</TableHead>
-                                    <TableHead scope="col">Description</TableHead>
-                                    <TableHead scope="col">Category</TableHead>
-                                    <TableHead scope="col">Paid by</TableHead>
-                                    <TableHead scope="col">Status</TableHead>
-                                    <TableHead scope="col" className="text-right">
-                                        Amount
-                                    </TableHead>
-                                    <TableHead scope="col" className="w-64">
-                                        <span className="sr-only">Actions</span>
-                                    </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {expenses.map((expense) => (
-                                    <TableRow key={expense.id}>
-                                        <TableCell className="whitespace-nowrap">{formatDate(expense.date)}</TableCell>
-                                        <TableCell className="max-w-56 truncate">
-                                            {expense.description || '—'}
-                                        </TableCell>
-                                        <TableCell>
-                                            {expense.category ? (
-                                                <Badge variant="outline">{expense.category.name}</Badge>
-                                            ) : (
-                                                <span className="text-muted-foreground">—</span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>{expense.paidBy?.user?.name ?? '—'}</TableCell>
-                                        <TableCell>
-                                            <ApprovalStatusBadge status={expense.approvalStatus} />
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <MoneyDisplay value={expense.amount} />
-                                        </TableCell>
-                                        <TableCell>
-                                            {canReviewExpenses || expense.approvalStatus === 'PENDING' ? (
-                                                <div className="flex justify-end gap-1">
-                                                    {expense.approvalStatus === 'PENDING' && canReviewExpenses ? (
-                                                        <>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                disabled={isClosed || isReviewing}
-                                                                aria-label={`Approve ${expense.description || 'expense'}`}
-                                                                onClick={() => handleReview(expense, 'approve')}>
-                                                                <Check className="text-success" aria-hidden />
-                                                            </Button>
-                                                            {/* <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                disabled={isClosed || isReviewing}
-                                                                aria-label={`Reject ${expense.description || 'expense'}`}
-                                                                onClick={() => handleReview(expense, 'reject')}>
-                                                                <X className="text-destructive" aria-hidden />
-                                                            </Button> */}
-                                                        </>
-                                                    ) : null}
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        asChild
-                                                        disabled={isClosed}
-                                                        aria-label={`Edit ${expense.description || 'expense'}`}>
-                                                        <Link href={`${basePath}/${expense.id}`}>
-                                                            <Pencil aria-hidden />
-                                                        </Link>
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        disabled={isClosed}
-                                                        aria-label={`Delete ${expense.description || 'expense'}`}
-                                                        onClick={() => setPendingDelete(expense)}>
-                                                        <Trash2 className="text-destructive" aria-hidden />
-                                                    </Button>
-                                                </div>
-                                            ) : null}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-
-                        {data ? (
-                            <Pagination pagination={data.pagination} onPageChange={setPage} itemLabel="expenses" />
-                        ) : null}
-                    </div>
-                )}
+                <DataTable
+                    columns={[
+                        { key: 'date', header: 'Date', cell: (expense) => <span className="whitespace-nowrap">{formatDate(expense.date)}</span> },
+                        { key: 'description', header: 'Description', cell: (expense) => expense.description || '—', cellClassName: 'max-w-56 truncate' },
+                        {
+                            key: 'category',
+                            header: 'Category',
+                            cell: (expense) =>
+                                expense.category ? (
+                                    <Badge variant="outline">{expense.category.name}</Badge>
+                                ) : (
+                                    <span className="text-muted-foreground">—</span>
+                                ),
+                        },
+                        { key: 'paidBy', header: 'Paid by', cell: (expense) => expense.paidBy?.user?.name ?? '—' },
+                        {
+                            key: 'status',
+                            header: 'Status',
+                            cell: (expense) => <ApprovalStatusBadge status={expense.approvalStatus} />,
+                        },
+                        { key: 'amount', header: 'Amount', align: 'right', cell: (expense) => <MoneyDisplay value={expense.amount} /> },
+                        {
+                            key: 'actions',
+                            header: <span className="sr-only">Actions</span>,
+                            headerClassName: 'w-64',
+                            cell: (expense) =>
+                                canReviewExpenses || expense.approvalStatus === 'PENDING' ? (
+                                    <div className="flex justify-end gap-1">
+                                        {expense.approvalStatus === 'PENDING' && canReviewExpenses ? (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                disabled={isClosed || isReviewing}
+                                                aria-label={`Approve ${expense.description || 'expense'}`}
+                                                onClick={() => handleReview(expense, 'approve')}>
+                                                <Check className="text-success" aria-hidden />
+                                            </Button>
+                                        ) : null}
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            asChild
+                                            disabled={isClosed}
+                                            aria-label={`Edit ${expense.description || 'expense'}`}>
+                                            <Link href={`${basePath}/${expense.id}`}>
+                                                <Pencil aria-hidden />
+                                            </Link>
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            disabled={isClosed}
+                                            aria-label={`Delete ${expense.description || 'expense'}`}
+                                            onClick={() => setPendingDelete(expense)}>
+                                            <Trash2 className="text-destructive" aria-hidden />
+                                        </Button>
+                                    </div>
+                                ) : null,
+                        },
+                    ]}
+                    rows={expenses}
+                    rowKey={(expense) => expense.id}
+                    isLoading={isLoading}
+                    busy={isFetching}
+                    error={error}
+                    onRetry={refetch}
+                    errorTitle="Couldn't load expenses"
+                    emptyIcon={Receipt}
+                    emptyMessage={emptyTitle}
+                    emptyAction={
+                        canWriteExpenses && !isClosed ? (
+                            <Button asChild>
+                                <Link href={`${basePath}/new`}>
+                                    <Plus aria-hidden />
+                                    Add expense
+                                </Link>
+                            </Button>
+                        ) : undefined
+                    }
+                    pagination={data?.pagination}
+                    onPageChange={setPage}
+                    itemLabel="expenses"
+                />
             </CardContent>
 
             <ConfirmDialog
