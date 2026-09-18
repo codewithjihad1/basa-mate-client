@@ -1,9 +1,11 @@
 "use client";
 
+import logo from "@/assets/logo.png";
+import Image from "next/image";
 import Link from "next/link";
 import { AppHeader } from "./AppHeader";
-import { SidebarNav } from "./SidebarNav";
 import { MobileNav } from "./MobileNav";
+import { SidebarNav } from "./SidebarNav";
 
 /**
  * Sidebar + header on desktop, header + bottom bar on mobile (§6, §31).
@@ -12,22 +14,34 @@ import { MobileNav } from "./MobileNav";
  * bottom nav, which is fixed and would otherwise cover it.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex min-h-dvh">
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 border-r border-border p-4 lg:flex">
-        <Link href="/dashboard" className="px-3 text-lg font-semibold tracking-tight">
-          BasaMate
-        </Link>
-        <SidebarNav />
-      </aside>
+    return (
+        <div className="flex min-h-dvh">
+            <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 border-r border-border p-4 lg:flex">
+                <Link
+                    href="/dashboard"
+                    className="px-3 text-lg font-semibold tracking-tight"
+                >
+                    <Image
+                        src={logo}
+                        alt="Basa"
+                        width={32}
+                        height={32}
+                        className="inline-block"
+                    />
+                    <span className="ml-2">BasaMate</span>
+                </Link>
+                <SidebarNav />
+            </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <AppHeader />
-        <main className="flex-1 px-4 pb-24 pt-6 lg:px-6 lg:pb-10">
-          <div className="mx-auto w-full max-w-7xl space-y-6">{children}</div>
-        </main>
-        <MobileNav />
-      </div>
-    </div>
-  );
+            <div className="flex min-w-0 flex-1 flex-col">
+                <AppHeader />
+                <main className="flex-1 px-4 pb-24 pt-6 lg:px-6 lg:pb-10">
+                    <div className="mx-auto w-full max-w-7xl space-y-6">
+                        {children}
+                    </div>
+                </main>
+                <MobileNav />
+            </div>
+        </div>
+    );
 }

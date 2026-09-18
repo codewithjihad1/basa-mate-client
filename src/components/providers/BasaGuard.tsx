@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useActiveBasa } from "@/hooks/useActiveBasa";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { FullPageSpinner } from "./AuthGuard";
 
 /**
@@ -10,14 +10,15 @@ import { FullPageSpinner } from "./AuthGuard";
  * to onboarding rather than shown an app with nothing in it (§5).
  */
 export function BasaGuard({ children }: { children: React.ReactNode }) {
-  const { basaId, hasNoBasa, isResolved } = useActiveBasa();
-  const router = useRouter();
+    const { basaId, hasNoBasa, isResolved } = useActiveBasa();
+    const router = useRouter();
 
-  useEffect(() => {
-    if (hasNoBasa) router.replace("/onboarding");
-  }, [hasNoBasa, router]);
+    useEffect(() => {
+        if (hasNoBasa) router.replace("/onboarding");
+    }, [hasNoBasa, router]);
 
-  if (!isResolved || !basaId) return <FullPageSpinner label="Loading your basa…" />;
+    if (!isResolved || !basaId)
+        return <FullPageSpinner label="Loading your basa…" />;
 
-  return <>{children}</>;
+    return <>{children}</>;
 }
