@@ -330,7 +330,7 @@ export function ExpenseForm({ type, expense, redirectTo }: ExpenseFormProps) {
           </>
         ) : null}
 
-        <FormField
+        {/* <FormField
           control={form.control}
           name="receiptUrl"
           render={({ field }) => (
@@ -348,9 +348,9 @@ export function ExpenseForm({ type, expense, redirectTo }: ExpenseFormProps) {
               <FormMessage />
             </FormItem>
           )}
-        />
+        /> */}
 
-        <FormField
+        {/* <FormField
           control={form.control}
           name="notes"
           render={({ field }) => (
@@ -362,7 +362,7 @@ export function ExpenseForm({ type, expense, redirectTo }: ExpenseFormProps) {
               <FormMessage />
             </FormItem>
           )}
-        />
+        /> */}
 
         <div className="flex justify-end gap-2 border-t border-border pt-4">
           <Button type="button" variant="outline" onClick={() => router.push(redirectTo)}>
