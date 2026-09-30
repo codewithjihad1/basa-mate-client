@@ -235,7 +235,7 @@ export function ReportView() {
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
-                        <Table className="min-w-[700px] border-separate border-spacing-0">
+                        <Table className="min-w-175 border-separate border-spacing-0">
                             <TableHeader>
                                 <TableRow>
                                     <TableHead className="w-16 border border-border bg-slate-100 px-2 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">
@@ -244,7 +244,7 @@ export function ReportView() {
                                     {reportMembers.map((member, index) => (
                                         <TableHead
                                             key={member.id}
-                                            className="w-[160px] border border-border bg-slate-100 px-2 py-3 text-center text-sm font-semibold text-emerald-700"
+                                            className="w-40 border border-border bg-slate-100 px-2 py-3 text-center text-sm font-semibold text-emerald-700"
                                         >
                                             {member.name || `Name ${index + 1}`}
                                         </TableHead>
