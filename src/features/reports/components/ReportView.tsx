@@ -83,6 +83,57 @@ export function ReportView() {
         }
     };
 
+    const totalMeals =
+        data?.meals.reduce(
+            (sum, row) => sum + Number(row._sum.quantity || 0),
+            0,
+        ) ?? 0;
+    const reportMembers = (basa?.members ?? []).map((member) => ({
+        id: member.id,
+        name: member.user?.name ?? "Unknown member",
+        total: Number(
+            data?.meals.find((row) => row.memberId === member.id)?._sum
+                .quantity ?? 0,
+        ),
+    }));
+
+    const dayMealRows = useMemo(() => {
+        if (!data || !data.cycle.startDate || !data.cycle.endDate) return [];
+
+        const aggregated = mealEntries.reduce<
+            Record<string, Record<string, number>>
+        >((acc, meal) => {
+            const dateKey = meal.date.slice(0, 10);
+            if (!acc[dateKey]) acc[dateKey] = {};
+            acc[dateKey][meal.memberId] =
+                (acc[dateKey][meal.memberId] ?? 0) + Number(meal.quantity ?? 0);
+            return acc;
+        }, {});
+
+        const start = new Date(data.cycle.startDate);
+        const end = new Date(data.cycle.endDate);
+        const rows: Array<{
+            day: number;
+            dateKey: string;
+            counts: Record<string, number>;
+        }> = [];
+
+        for (
+            let current = new Date(start);
+            current <= end;
+            current.setDate(current.getDate() + 1)
+        ) {
+            const dateKey = current.toISOString().slice(0, 10);
+            rows.push({
+                day: current.getDate(),
+                dateKey,
+                counts: aggregated[dateKey] ?? {},
+            });
+        }
+
+        return rows;
+    }, [data, mealEntries]);
+
     if (error)
         return (
             <ErrorState
@@ -109,56 +160,6 @@ export function ReportView() {
             />
         );
     }
-
-    const totalMeals = data.meals.reduce(
-        (sum, row) => sum + Number(row._sum.quantity || 0),
-        0,
-    );
-    const reportMembers = (basa?.members ?? []).map((member) => ({
-        id: member.id,
-        name: member.user?.name ?? "Unknown member",
-        total: Number(
-            data.meals.find((row) => row.memberId === member.id)?._sum
-                .quantity ?? 0,
-        ),
-    }));
-
-    const dayMealRows = useMemo(() => {
-        const aggregated = mealEntries.reduce<
-            Record<string, Record<string, number>>
-        >((acc, meal) => {
-            const dateKey = meal.date.slice(0, 10);
-            if (!acc[dateKey]) acc[dateKey] = {};
-            acc[dateKey][meal.memberId] =
-                (acc[dateKey][meal.memberId] ?? 0) + Number(meal.quantity ?? 0);
-            return acc;
-        }, {});
-
-        if (!data.cycle.startDate || !data.cycle.endDate) return [];
-
-        const start = new Date(data.cycle.startDate);
-        const end = new Date(data.cycle.endDate);
-        const rows: Array<{
-            day: number;
-            dateKey: string;
-            counts: Record<string, number>;
-        }> = [];
-
-        for (
-            let current = new Date(start);
-            current <= end;
-            current.setDate(current.getDate() + 1)
-        ) {
-            const dateKey = current.toISOString().slice(0, 10);
-            rows.push({
-                day: current.getDate(),
-                dateKey,
-                counts: aggregated[dateKey] ?? {},
-            });
-        }
-
-        return rows;
-    }, [data.cycle.startDate, data.cycle.endDate, mealEntries]);
 
     return (
         <>
