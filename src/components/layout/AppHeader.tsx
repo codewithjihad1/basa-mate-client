@@ -16,7 +16,7 @@ export function AppHeader() {
     const mobileNavOpen = useAppSelector((state) => state.ui.mobileNavOpen);
 
     return (
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur lg:px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur print:hidden lg:px-6">
             <Sheet
                 open={mobileNavOpen}
                 onOpenChange={(open) => dispatch(setMobileNavOpen(open))}

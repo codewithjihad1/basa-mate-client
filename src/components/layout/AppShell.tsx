@@ -16,7 +16,7 @@ import { SidebarNav } from "./SidebarNav";
 export function AppShell({ children }: { children: React.ReactNode }) {
     return (
         <div className="flex min-h-dvh">
-            <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 border-r border-border p-4 lg:flex">
+            <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 border-r border-border p-4 print:hidden lg:flex">
                 <Link
                     href="/dashboard"
                     className="px-3 text-lg font-semibold tracking-tight"
@@ -35,7 +35,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
             <div className="flex min-w-0 flex-1 flex-col">
                 <AppHeader />
-                <main className="flex-1 px-4 pb-24 pt-6 lg:px-6 lg:pb-10">
+                <main className="flex-1 px-4 pb-24 pt-6 print:px-0 print:pb-0 print:pt-0 lg:px-6 lg:pb-10">
                     <div className="mx-auto w-full max-w-7xl space-y-6">
                         {children}
                     </div>
